@@ -46,3 +46,10 @@ def authenticate_user(nick, password):
             )
             result = cursor.fetchone()
             return result if result else None
+
+def update_balance(nick, new_balance):
+    with db_lock:
+        with sqlite3.connect(DB_PATH) as conn:
+            cursor = conn.cursor()
+            cursor.execute("UPDATE players SET balance = ? WHERE nick = ?", (new_balance, nick))
+            conn.commit()

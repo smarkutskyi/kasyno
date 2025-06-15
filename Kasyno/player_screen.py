@@ -183,24 +183,30 @@ def open_registration_window():
             if not all([nick, imie, nazwisko, pesel, password]):
                 messagebox.showerror("Błąd", "Wszystkie pola są wymagane.")
                 return
+
             if not re.match(r'^[A-Za-z0-9]+$', nick) or len(nick) > 12 or len(nick) < 5:
                 messagebox.showerror("Błąd", "Nick musi mieć od 5 do 12 znaków i zawierać tylko litery i cyfry.")
                 return
+
             if len(imie) > 15 or len(nazwisko) > 15:
                 messagebox.showerror("Błąd", "Imię i nazwisko max 15 znaków.")
                 return
+
             if re.search(r'\d', imie) or re.search(r'\d', nazwisko):
                 messagebox.showerror("Błąd", "Imię i nazwisko nie mogą zawierać cyfr.")
                 return
+
             if not pesel.isdigit() or len(pesel) != 11:
                 messagebox.showerror("Błąd", "PESEL musi mieć dokładnie 11 cyfr.")
                 return
 
             success, error = register_user(nick, imie, nazwisko, pesel, password)
+
             if success:
                 if any(p['nick'] == nick for p in players):
                     messagebox.showerror("Błąd", "Ten użytkownik jest już dodany na listę.")
                     return
+
                 players.append({'nick': nick, 'balance': 2000})
                 win.destroy()
 
@@ -210,25 +216,34 @@ def open_registration_window():
         tk.Label(win, text="Nick:").pack()
         entry_nick = tk.Entry(win)
         entry_nick.pack()
+
         tk.Label(win, text="Imię:").pack()
         entry_imie = tk.Entry(win)
         entry_imie.pack()
+
         tk.Label(win, text="Nazwisko:").pack()
         entry_nazwisko = tk.Entry(win)
         entry_nazwisko.pack()
+
         tk.Label(win, text="PESEL:").pack()
         entry_pesel = tk.Entry(win)
         entry_pesel.pack()
+
         tk.Label(win, text="Hasło:").pack()
         entry_haslo = tk.Entry(win, show="*")
         entry_haslo.pack()
+
         tk.Button(win, text="Zarejestruj", command=submit).pack(pady=10)
         win.mainloop()
 
     threading.Thread(target=run).start()
 
 def main_loop():
+
+    global players
+
     running = True
+
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -236,20 +251,34 @@ def main_loop():
                 sys.exit()
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 mx, my = event.pos
+
                 if add_button_rect and add_button_rect.collidepoint(mx, my):
                     if len(players) < 4:
                         open_user_action_window()
+
                 elif add_funds_rect and add_funds_rect.collidepoint(mx, my):
                     show_add_funds_message()
+
                 elif back_button_rect and back_button_rect.collidepoint(mx, my):
                     return
+
                 elif play_button_rect and play_button_rect.collidepoint(mx, my):
+
+                    removed = [p['nick'] for p in players if p['balance'] < 25]
+                    players = [p for p in players if p['balance'] >= 25]
+
+                    if removed:
+                        msg = "Usunięto graczy z małą ilością pieniędzy:\n" + ", ".join(removed)
+                        messagebox.showinfo("Usunięci gracze", msg)
+
                     if players:
                         launch_roulette(players)
                     else:
-                        messagebox.showwarning("Brak graczy", "Dodaj przynajmniej jednego gracza, aby rozpocząć grę.")
+                        messagebox.showwarning("Brak graczy",
+                                               "Wszyscy gracze mieli mniej niż 25 pieniędzy. Dodaj nowych.")
 
                 for rect, nick in delete_buttons:
+
                     if rect.collidepoint(mx, my):
                         players[:] = [p for p in players if p['nick'] != nick]
 
